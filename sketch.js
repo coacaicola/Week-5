@@ -1,15 +1,25 @@
-/* DN1010 Experimental Interaction, Ashley Hi 2026
- * Week 5 - Computer Vision
- * Webcam Drawing
- */
+function setup() {
+  createCanvas(windowWidth, windowHeight);
+}
 
+function draw() {
+  background(0);
+
+  fill(255, 100, 150);
+  ellipse(mouseX, mouseY, 30, 30);
+}
+
+function windowResized() {
+  resizeCanvas(windowWidth, windowHeight);
+}
 var camera;
 var prevImg;
 var currImg;
 var diffImg;
 var spotImg;
-var threshold = 0.1; // *** change sensitivity (decimal between 0 - 1)
+var threshold = 0.1;
 var grid;
+
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
@@ -17,11 +27,11 @@ function setup() {
   camera = createCapture(VIDEO, { flipped: true });
   camera.hide();
 
-  grid = new Grid(1280, 720);
+  grid = new Grid(1920, 1080);
 }
 
 function draw() {
-  background(120);
+  background(63, 34, 236);
   image(camera, 0, 0, 1280, 720);
   camera.loadPixels();
 
@@ -85,7 +95,7 @@ function draw() {
     smallH
   );
 
-  diffImg.filter("threshold", threshold);
+  //diffImg.filter("threshold", threshold);
 
   image(currImg, 1280, 0);
   image(diffImg, 1280, currImg.height);
@@ -113,36 +123,44 @@ var Grid = function (_w, _h) {
   console.log(_w, _h);
 
   for (var i = 1; i < this.arrayLength; i++) {
-    this.colorArray.push(
-      //(280, 100, 32, 255) // *** set colours of the points
-      lerpColor(color(280, 100, 32, 255), color(50, 61, 139, 255), 0.0001 * i)
-    );
-  }
+  this.colorArray.push(
+    lerpColor(
+      color("#efca62"),
+      color("#3f22ec"),
+      0.0001 * i
+    )
+  );
+}
 
-  this.update = function (_img) {
-    this.diffImg = _img;
-    this.diffImg.loadPixels();
+this.update = function (_img) {
+  this.diffImg = _img;
+  this.diffImg.loadPixels();
 
-    for (var x = 0; x < this.diffImg.width; x += 1) {
-      for (var y = 0; y < this.diffImg.height; y += 1) {
-        var index = (x + y * this.diffImg.width) * 4;
-        var state = diffImg.pixels[index + 0];
+  for (var x = 0; x < this.diffImg.width; x++) {
+    for (var y = 0; y < this.diffImg.height; y++) {
 
-        if (state == 255) {
-          var screenX = map(x, 0, this.diffImg.width, 0, this.worldWidth);
-          var screenY = map(y, 0, this.diffImg.height, 0, this.worldHeight);
-          var noteIndexX = int(screenX / this.noteWidth);
-          var noteIndexY = int(screenY / this.noteWidth);
-          var noteIndex = noteIndexX + noteIndexY * this.numOfNotesX;
-          this.noteStates[noteIndex] = 1;
-        }
+      var index = (x + y * this.diffImg.width) * 4;
+      var intensity = this.diffImg.pixels[index] / 255;
+
+      if (intensity > 0.2) {
+
+        var screenX = map(x, 0, this.diffImg.width, 0, this.worldWidth);
+        var screenY = map(y, 0, this.diffImg.height, 0, this.worldHeight);
+
+        var noteIndexX = int(screenX / this.noteWidth);
+        var noteIndexY = int(screenY / this.noteWidth);
+
+        var noteIndex = noteIndexX + noteIndexY * this.numOfNotesX;
+
+        this.noteStates[noteIndex] = max(this.noteStates[noteIndex], intensity);
       }
     }
+  }
 
-    for (var i = 0; i < this.arrayLength; i++) {
-      this.noteStates[i] -= 0.1; // *** set how long points take to disappear (decimal between 0 - 1)
-      this.noteStates[i] = constrain(this.noteStates[i], 0, 1);
-    }
+  for (var i = 0; i < this.arrayLength; i++) {
+    this.noteStates[i] -= 0.02;
+    this.noteStates[i] = constrain(this.noteStates[i], 0, 1);
+  }
 
     this.draw();
   };
@@ -150,18 +168,20 @@ var Grid = function (_w, _h) {
   this.draw = function () {
     push();
     noStroke();
-    for (var x = 1; x < this.numOfNotesX / 2; x++) {
-      for (var y = 0; y < this.numOfNotesY / 2; y++) {
+    for (var x = 0; x < this.numOfNotesX; x++) {
+      for (var y = 0; y < this.numOfNotesY; y++) {
         var posX = this.noteWidth / 1 + 2 * x * this.noteWidth;
         var posY = this.noteWidth / 5 + 2 * y * this.noteWidth;
         var noteIndex = x + y * this.numOfNotesX;
 
         if (this.noteStates[noteIndex] > 0) {
           fill(this.colorArray[noteIndex]);
-          square(posX, posY, camera.width / 40, camera.height / 30); // *** change shape of point
+          var size = 5 + this.noteStates[noteIndex] * 600;
+          ellipse(posX, posY, size, size); //
         }
       }
     }
     pop();
   };
 };
+
