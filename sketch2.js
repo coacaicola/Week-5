@@ -21,7 +21,7 @@ function draw() {
     }
 
     // circle
-    stroke(100, 28, 100);
+    stroke(100, 75, 50);
     translate(width / 5, height / 4);
     for (var i = 0; i < 5000; i++) {
         var cirDist = (max(random(2, 0), random(0, 0)) * width) / 8;
@@ -33,7 +33,7 @@ function draw() {
 
     // top line
     stroke(0, 29, 125);
-    for (var i = 0; i < 900; i++) {
+    for (var i = 0; i < 500; i++) {
         var lineX = random(90, 500);
         var lineY = random(20 - 10, 15 + 30);
         point(lineX, lineY);
